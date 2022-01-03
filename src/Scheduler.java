@@ -19,6 +19,11 @@ public abstract class Scheduler {
     public void removeProcess(Process p) {
         /* TODO: you need to add some code here */
 
+        boolean continueRemoving = true;
+        while (continueRemoving) {
+            continueRemoving = processes.remove(p); // While the process is still in the Arraylist of processes, keep removing it.
+        }
+
     }
 
     /* the getNextProcess() method should return the process that should
