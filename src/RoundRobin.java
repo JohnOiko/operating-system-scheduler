@@ -6,6 +6,9 @@ public class RoundRobin extends Scheduler {
     public RoundRobin() {
         this.quantum = 1; // default quantum
         /* TODO: you _may_ need to add some code here */
+
+        processes.add(null);
+
     }
 
     public RoundRobin(int quantum) {
@@ -17,7 +20,7 @@ public class RoundRobin extends Scheduler {
         /* TODO: you need to add some code here */
 
         for (int i = 0 ; i < quantum ; i++) {
-            processes.add(processes.size() - 1, p); // Add the process quantum times to the end of the Arraylist of processes.
+            processes.add(processes.size(), p); // Add the process quantum times to the end of the Arraylist of processes.
         }
 
     }
@@ -26,11 +29,19 @@ public class RoundRobin extends Scheduler {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        Process nextProcess = processes.remove(0); // Remove the process that is at the start of the Arraylist of processes.
-        if (nextProcess != processes.get(0)) {
-            addProcess(nextProcess); // Add the removed process quantum times to the end of the Arraylist of processes.
+        if (processes.size() == 1) {
+            /* If there is only one process in the Arraylist,
+             * that is the last executed process, thus return null. */
+            return null;
         }
-        return nextProcess;
-
+        else {
+            Process prevProcess = processes.remove(0); // Remove and save the last executed process.
+            if (prevProcess != processes.get(0) && prevProcess != null) {
+                /* If the last executed process was different from the next one and not null,
+                 * add it to the end of the processed to be executed. */
+                addProcess(prevProcess);
+            }
+            return processes.get(0);
+        }
     }
 }
