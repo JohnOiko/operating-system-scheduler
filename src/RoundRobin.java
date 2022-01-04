@@ -30,15 +30,14 @@ public class RoundRobin extends Scheduler {
          * and change the return value */
 
         if (processes.size() == 1) {
-            /* If there is only one process in the Arraylist,
-             * that is the last executed process, thus return null. */
+            // If there is only one process in the Arraylist then that is the last executed process, thus return null.
             return null;
         }
         else {
             Process prevProcess = processes.remove(0); // Remove and save the last executed process.
             if (prevProcess != processes.get(0) && prevProcess != null) {
                 /* If the last executed process was different from the next one and not null,
-                 * add it to the end of the processed to be executed. */
+                 * add it to the end of the processes to be executed again. */
                 addProcess(prevProcess);
             }
             return processes.get(0);
