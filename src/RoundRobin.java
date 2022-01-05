@@ -3,11 +3,15 @@ public class RoundRobin extends Scheduler {
 
     private int quantum;
 
+    private int quantaUsed;
+    private Process lastExecutedProcess;
+
     public RoundRobin() {
         this.quantum = 1; // default quantum
         /* TODO: you _may_ need to add some code here */
 
-        processes.add(null);
+        this.quantaUsed = 0;
+        this.lastExecutedProcess = null;
 
     }
 
@@ -19,9 +23,11 @@ public class RoundRobin extends Scheduler {
     public void addProcess(Process p) {
         /* TODO: you need to add some code here */
 
-        for (int i = 0 ; i < quantum ; i++) {
-            processes.add(processes.size(), p); // Add the process quantum times to the end of the Arraylist of processes.
-        }
+        /* If the last executed process finished using its quanta last tick and did not get removed, add the process
+        before the last process of the Arraylist of processes. */
+        if (quantaUsed == 0 && isScheduled(lastExecutedProcess))
+            processes.add(processes.size() - 1, p);
+        else processes.add(processes.size(), p); // In all other cases add it to the end of the Arraylist of processes.
 
     }
 
@@ -29,18 +35,24 @@ public class RoundRobin extends Scheduler {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        if (processes.size() == 1) {
-            // If there is only one process in the Arraylist then that is the last executed process, thus return null.
-            return null;
+        if (processes.size() == 0) return null; // If no processes are scheduled return null.
+        // If the last executed process was removed, reset the quanta used.
+        if (lastExecutedProcess != processes.get(0) && quantaUsed > 0) quantaUsed = 0;
+        Process nextProcess = processes.get(0);
+        if (quantaUsed == quantum - 1) {
+            processes.remove(0); // If after this execution the process has exhausted its quanta, remove it.
+            if (quantum == 1) processes.add(processes.size(), nextProcess); // If quantum = 1 add it to the end.
+            else addProcess(nextProcess); // Else if quantum > 1 add it using the class' method.
         }
-        else {
-            Process prevProcess = processes.remove(0); // Remove and save the last executed process.
-            if (prevProcess != processes.get(0) && prevProcess != null) {
-                /* If the last executed process was different from the next one and not null,
-                 * add it to the end of the processes to be executed again. */
-                addProcess(prevProcess);
-            }
-            return processes.get(0);
-        }
+        quantaUsed = (quantaUsed + 1) % quantum;
+        lastExecutedProcess = nextProcess;
+        return nextProcess;
+    }
+
+    // Private method to check if the given process is in either of the last two spots of the Arraylist of processes.
+    private boolean isScheduled(Process p) {
+        if (processes.size() == 0 || p == null) return false;
+        else if (processes.size() == 1) return p == processes.get(0);
+        else return p == processes.get(processes.size() - 1) || p == processes.get(processes.size() - 2);
     }
 }
