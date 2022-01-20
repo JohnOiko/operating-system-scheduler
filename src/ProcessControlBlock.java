@@ -17,7 +17,7 @@ public class ProcessControlBlock {
         this.stopTimes = new ArrayList<Integer>();
         /* TODO: you need to add some code here
          * Hint: every process should get a unique PID */
-        this.pid = pidTotal++; // change this line
+        this.pid = pidTotal++; // increment the pidTotal
         
     }
 
@@ -30,11 +30,11 @@ public class ProcessControlBlock {
          * Hint: update this.state, but also include currentClockTime
          * in startTimes/stopTimes */
 
-        /* Αν η διεργασία ειναι σε κατάσταση READY, μπορεί να μεταβεί
-         * μόνο στη RUNNING, τότε αποθηκέυουμε το startTime. Αν η
-         * διεργασία είναι σε κατάσταση RUNNING, μπορεί να μεταβεί στη
-         * READY ή στην TERMINATED, οπότε σε κάθε περίπτωση
-         * αποθηκεύουμε το stopTime. */
+        /* If the process is in READY state, it can only change to RUNNING,
+         then save the startTime.
+         If the process is in RUNNING state, it can change to either
+         * READY or TERMINATED, so in any case
+          we save the stopTime. */
         if(this.state==ProcessState.READY) {
                 startTimes.add(currentClockTime);
         }
@@ -58,4 +58,3 @@ public class ProcessControlBlock {
     }
     
 }
-
