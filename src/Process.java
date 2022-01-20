@@ -5,6 +5,8 @@ public class Process {
     private int arrivalTime;
     private int burstTime;
     private int memoryRequirements;
+
+    private int memoryArrivalTime;  //the tick at which the process loaded into memory (READY)
     
     public Process(int arrivalTime, int burstTime, int memoryRequirements) {
         this.arrivalTime = arrivalTime;
@@ -21,7 +23,7 @@ public class Process {
         /* TODO: you need to add some code here
          * Hint: this should run every time a process starts running */
 
-        /* Απλά αλλάζω την κατάσταση της διεργασίας σε RUNNING */
+        /* Change the process state to RUNNING */
         this.getPCB().setState(ProcessState.RUNNING, CPU.clock);
         
     }
@@ -30,10 +32,10 @@ public class Process {
         /* TODO: you need to add some code here
          * Hint: this should run every time a process stops running */
 
-        /* Υπολογίζω τον χρόνο που έτρεξε η διεργασία (runTime)
-         * Αν αυτός ισούται με τον χρόνο καταιγισμού της, την τερματίζω (TERMINATED)
-         * Αλλιως, την βάζω ξανά στην ουρά (READY) */
-        double runTime = CPU.clock - getWaitingTime() - arrivalTime;
+        /* Calculate the runTime,
+         * if it is equal to burstTime, TERMINATE the process
+         * else, put it in the READY state. */
+        double runTime = CPU.clock - getWaitingTime() - memoryArrivalTime;
         if(runTime==burstTime){
             getPCB().setState(ProcessState.TERMINATED,CPU.clock);
         }
@@ -47,47 +49,57 @@ public class Process {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        /* Αρχικοποιούμε το waitingTime στον χρονο που περίμενε η διεργασία
-         * μέχρι την πρώτη έναρξη εκτέλεσης της. */
+        /* The time the process was waiting in the memory to get the cpu */
         double waitingTime = getResponseTime();
 
-        /* Προσθέτουμε στο waitingTime όλα τα διαστήματα αναμονής της διεργασίας
-         * ανάμεσα στις περιόδους εκτέλεσης της. */
+        /* Add the time waiting between runs */
         for (int i=1; i<getPCB().getStartTimes().size(); i++) {
             waitingTime += getPCB().getStartTimes().get(i) - getPCB().getStopTimes().get(i-1);
         }
 
-        /* Τέλος, ελέγχουμε αν η διεργασία είναι αυτή τη στιγμή σε κατάσταση READY
-         * και αν ναι, τότε προσθέτουμε τον χρόνο αναμονής απο την τελευταία διακοπή
-         * της εκτέλεσης της. */
+        /* If the process is still waiting (in READY state), then add
+        * the time since it last stopped. */
         if (getPCB().getState() == ProcessState.READY) {
             waitingTime += CPU.clock - getPCB().getStopTimes().get(getPCB().getStopTimes().size()-1);
         }
 
         return waitingTime;
     }
-    
+
+    /* The time the process waited in memory until it first got the cpu */
     public double getResponseTime() {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        /* Ο χρόνος μέχρι να πάρει για πρώτη φορά τη CPU η διεργασία */
-        double responseTime = getPCB().getStartTimes().get(0) - arrivalTime;
+
+        double responseTime = getPCB().getStartTimes().get(0) - memoryArrivalTime;
         return responseTime;
     }
-    
+
+    /* The time from the moment the process loaded into memory
+       until it finished its execution. */
     public double getTurnAroundTime() {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        /* Ο συνολικός χρόνος απο τη στιγμη που φορτώνεται η διεργασία
-         * στη μνήμη μέχρι και την ολοκλήρωση της εκτέλεσης της.
-         * Η διαφορά του τελευταίου stopTime απο το arrivalTime. */
-        double turnAroundTime = getPCB().getStopTimes().get(getPCB().getStopTimes().size()-1) - arrivalTime;
+        /* The time between the memoryArrivalTime and the last stopTime. */
+        double turnAroundTime = getPCB().getStopTimes().get(getPCB().getStopTimes().size()-1) - memoryArrivalTime;
         return turnAroundTime;
     }
 
     public int getBurstTime(){
         return burstTime;
     }
+    public int getArrivalTime(){
+        return arrivalTime;
+    }
+
+    public int getMemoryArrivalTime(){
+        return memoryArrivalTime;
+    }
+    public void setMemoryArrivalTime(int memoryArrivalTime) {
+        this.memoryArrivalTime = memoryArrivalTime;
+    }
+
+
 }
