@@ -3,9 +3,13 @@ import java.util.ArrayList;
 public class NextFit extends MemoryAllocationAlgorithm {
 
     private int nextUsableAddress;
+    private ArrayList<Process> loadedProcesses;
+    private ArrayList<Integer> getLoadedProcessesAddresses;
 
     public NextFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
+        loadedProcesses = new ArrayList<>();
+        getLoadedProcessesAddresses = new ArrayList<>();;
     }
 
     public int fitProcess(Process p, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
@@ -15,6 +19,8 @@ public class NextFit extends MemoryAllocationAlgorithm {
          * Hint: this should return the memory address where the process was
          * loaded into if the process fits. In case the process doesn't fit, it
          * should return -1. */
+
+
 
         boolean showDebugMessages = false;
 
@@ -73,6 +79,8 @@ public class NextFit extends MemoryAllocationAlgorithm {
             }
         }
         if (fit) {
+            loadedProcesses.add(p);
+            getLoadedProcessesAddresses.add(address);
             return address;
         }
         else {
@@ -128,6 +136,18 @@ public class NextFit extends MemoryAllocationAlgorithm {
             addressCounter += availableBlockSizes[i];
         }
         return addressCounter - 1;
+    }
+
+    private void cleanUp(ArrayList<MemorySlot> currentlyUsedMemorySlots) {
+        for (int i = 0 ; i < loadedProcesses.size() ; i++) {
+            if (loadedProcesses.get(i).getPCB().getState() == ProcessState.TERMINATED) {
+                for (int j = 0 ; j < currentlyUsedMemorySlots.size() ; j++) {
+                    if (getLoadedProcessesAddresses.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
+                        System.out.println("**Process " + loadedProcesses.get(i).getPCB().getPid() + " must be deleted ***");
+                    }
+                }
+            }
+        }
     }
 
 }
