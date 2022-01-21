@@ -1,16 +1,31 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class NextFit extends MemoryAllocationAlgorithm {
 
     private int nextUsableAddress;
+    private ArrayList<Integer> blockLimits;
     private ArrayList<Process> loadedProcesses;
-    private ArrayList<Integer> loadedProcessesAddresses;
+    private ArrayList<Integer> loadedAddressesStart;
+    private ArrayList<Integer> loadedAddressesEnd;
+
     private boolean showDebugMessages = true;
 
     public NextFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
+        nextUsableAddress = 0;
+        blockLimits = new ArrayList<>();
+        int limitCounter = 0;
+        for (int i = 0 ; i < availableBlockSizes.length ; i++) {
+            blockLimits.add(limitCounter);
+            if (showDebugMessages) System.out.print(limitCounter);
+            limitCounter += availableBlockSizes[i];
+            blockLimits.add(limitCounter);
+            if (showDebugMessages) System.out.print(" " + limitCounter + " | ");
+        }
         loadedProcesses = new ArrayList<>();
-        loadedProcessesAddresses = new ArrayList<>();;
+        loadedAddressesStart = new ArrayList<>();
+        loadedAddressesEnd = new ArrayList<>();
     }
 
     public int fitProcess(Process p, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
@@ -23,132 +38,143 @@ public class NextFit extends MemoryAllocationAlgorithm {
 
         cleanUp(currentlyUsedMemorySlots);
 
-        int addressesSearched = 0;
+        while (nextUsableAddress != findNextSlotEnd(nextUsableAddress, currentlyUsedMemorySlots)) {
+            nextUsableAddress = findNextSlotEnd(nextUsableAddress, currentlyUsedMemorySlots);
+        }
+
+
+        boolean reachedEnd = false;
         address = nextUsableAddress;
-        if (showDebugMessages) System.out.println(addressesSearched + " < " + getMaxAddress(availableBlockSizes));
-        while (addressesSearched < getMaxAddress(availableBlockSizes) && !fit) {
-            int nextAvailableBlockIndex = getBlockIndex(address, availableBlockSizes);
-            if (showDebugMessages) System.out.println("nextAvailableBlockIndex = " + nextAvailableBlockIndex);
-            int nextAvailableBlockStart = getBlockStart(nextAvailableBlockIndex, availableBlockSizes);
-            if (showDebugMessages) System.out.println("nextAvailableBlockStart = " + nextAvailableBlockStart);
-            int nextAvailableBlockEnd = nextAvailableBlockStart + availableBlockSizes[nextAvailableBlockIndex];
-            if (showDebugMessages) System.out.println("nextAvailableBlockEnd = " + nextAvailableBlockEnd);
-            MemorySlot nextAvailableSlot = getAvailableSlot(nextAvailableBlockStart, nextAvailableBlockEnd, currentlyUsedMemorySlots);
-            if (nextAvailableSlot != null) {
-                if (showDebugMessages) System.out.println("nextAvailableSlot = [" + nextAvailableSlot.getStart() + ", " + nextAvailableSlot.getEnd() + "]");
-                if (showDebugMessages) System.out.println("free slot found");
-                if (p.getMemoryRequirements() <= nextAvailableSlot.getEnd() - nextAvailableSlot.getStart()) {
-                    nextAvailableSlot.setEnd(nextAvailableSlot.getStart() + p.getMemoryRequirements() - 1);
-                    currentlyUsedMemorySlots.add(nextAvailableSlot);
-                    address = nextAvailableSlot.getStart();
-                    if (showDebugMessages) System.out.println("placed on slot [" + nextAvailableSlot.getStart() + ", " + nextAvailableSlot.getEnd() + "]");
-                    nextUsableAddress = nextAvailableSlot.getEnd() + 1;
-                    if (nextUsableAddress > getMaxAddress(availableBlockSizes)) {
-                        nextUsableAddress = 0;
-                    }
-                    fit = true;
+
+        if (showDebugMessages) System.out.println("A");
+
+        System.out.println("nextUsableAddress at start is " + nextUsableAddress);
+
+        while (!fit && ((address >= nextUsableAddress && !reachedEnd) || (address < nextUsableAddress && reachedEnd))) {
+            int currentBlockIndex = getBlockIndex(address, blockLimits);
+            int blockStart = blockLimits.get(2 * currentBlockIndex);
+            int blockEnd = blockLimits.get(2 * currentBlockIndex + 1);
+            //System.out.println("Block start " + blockStart + " - block end " + blockEnd);
+            int nextSlotLimit = findNextSlotLimit(address, currentlyUsedMemorySlots);
+            //System.out.println("Next slot limit " + nextSlotLimit);
+            System.out.println("Next start " + address + " - " + " next limit " + (blockEnd <= nextSlotLimit ? blockEnd : nextSlotLimit));
+            if (address + p.getMemoryRequirements() <= (blockEnd <= nextSlotLimit ? blockEnd : nextSlotLimit)) {
+                fit = true;
+                System.out.println("Process " + p.getPCB().getPid() + " can be placed in slot [" + address + ", " + (address + p.getMemoryRequirements() - 1) + "]");
+                MemorySlot newSlot = new MemorySlot(address, address + p.getMemoryRequirements() - 1, blockStart, blockEnd);
+                currentlyUsedMemorySlots.add(newSlot);
+                nextUsableAddress = address + p.getMemoryRequirements();
+                if (nextUsableAddress >= blockLimits.get(blockLimits.size() - 1) - 1) {
+                    nextUsableAddress = 0;
                 }
-                else {
-                    if (showDebugMessages) System.out.println("process doesn't fit in free slot");
-                    if (addressesSearched == 0) {
-                        addressesSearched += address - nextAvailableBlockStart;
-                        if (showDebugMessages) System.out.println("\n" + addressesSearched + " (0 +=" + address + "-" + nextAvailableBlockStart + ")");
-                    }
-                    addressesSearched += nextAvailableBlockEnd - address;
-                    if (showDebugMessages) System.out.println("\n" + addressesSearched + " (+=" + nextAvailableBlockEnd + "-" + address + ") " + " < " + getMaxAddress(availableBlockSizes));
-                    address = nextAvailableBlockEnd;
-                    if (showDebugMessages) System.out.println(address + " > " + getMaxAddress(availableBlockSizes));
-                    if (address > getMaxAddress(availableBlockSizes)) {
-                        address = 0;
-                    }
-                }
+                System.out.println("nextUsableAdress at end of loading is " + nextUsableAddress);
             }
             else {
-                if (addressesSearched == 0) {
-                    addressesSearched += address - nextAvailableBlockStart;
-                    if (showDebugMessages) System.out.println("\n" + addressesSearched + " (0 +=" + address + "-" + nextAvailableBlockStart + ")");
+                System.out.println("B");
+                address = blockEnd <= nextSlotLimit ? blockEnd : nextSlotLimit;
+
+                while (address != findNextSlotEnd(address, currentlyUsedMemorySlots)) {
+                    address = findNextSlotEnd(address, currentlyUsedMemorySlots);
                 }
-                addressesSearched += nextAvailableBlockEnd - address;
-                if (showDebugMessages) System.out.println("\n" + addressesSearched + " (+=" + nextAvailableBlockEnd + "-" + address + ") " + " < " + getMaxAddress(availableBlockSizes));
-                address = nextAvailableBlockEnd;
-                if (showDebugMessages) System.out.println(address + " > " + getMaxAddress(availableBlockSizes));
-                if (address > getMaxAddress(availableBlockSizes)) {
+                //System.out.println("New address is " + address);
+                //System.out.println(address + " >= " + (blockLimits.get(blockLimits.size() - 1) - 1));
+                if (address >= blockLimits.get(blockLimits.size() - 1) && !reachedEnd) {
                     address = 0;
+                    reachedEnd = true;
                 }
             }
         }
+
         if (fit) {
             loadedProcesses.add(p);
-            loadedProcessesAddresses.add(address);
+            loadedAddressesStart.add(address);
+            loadedAddressesEnd.add(address + p.getMemoryRequirements());
             return address;
         }
-        else {
-            return -1;
-        }
+        else return -1;
     }
 
-    private MemorySlot getAvailableSlot(int blockStart, int blockEnd, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
-        int freeSlotStart = -1;
-        int memorySlotsInBlock = 0;
-        for (MemorySlot memorySlot : currentlyUsedMemorySlots) {
-            if (memorySlot.getBlockStart() == blockStart && memorySlot.getBlockEnd() == blockEnd) {
-                if (memorySlot.getStart() > freeSlotStart && memorySlot.getEnd() < blockEnd - 1) {
-                    freeSlotStart = memorySlot.getEnd() + 1;
-                }
-                memorySlotsInBlock++;
-            }
-        }
-        if (currentlyUsedMemorySlots.size() == 0) {
-            freeSlotStart = blockStart;
-        }
-        else if (memorySlotsInBlock == 0) {
-            freeSlotStart = blockStart;
-        }
-        else if (freeSlotStart == -1) {
-            return null;
-        }
-        return new MemorySlot(freeSlotStart, blockEnd, blockStart, blockEnd);
-    }
-
-    private int getBlockIndex(int address, int[] availableBlockSizes) {
-        int addressCounter = 0;
-        for (int i = 0 ; i < availableBlockSizes.length ; i++) {
-            if (address >= addressCounter && address <= addressCounter + availableBlockSizes[i] - 1) {
+    private int getBlockIndex(int address, ArrayList<Integer> blockLimits) {
+        for (int i = 0 ; i < blockLimits.size() ; i++) {
+            if (address >= blockLimits.get(2 * i) && address < blockLimits.get(2 * i + 1)) {
                 return i;
             }
-            addressCounter += availableBlockSizes[i];
         }
         return -1;
     }
 
-    private int getBlockStart(int blockIndex, int[] availableBlockSizes) {
-        int addressCounter = 0;
-        for (int i = 0 ; i < blockIndex ; i++) {
-            addressCounter += availableBlockSizes[i];
+    private int findNextSlotLimit(int address, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
+        ArrayList<Integer> slotLimits = new ArrayList<>();
+        for (int i = 0 ; i < currentlyUsedMemorySlots.size() ; i++) {
+            slotLimits.add(currentlyUsedMemorySlots.get(i).getStart());
+            slotLimits.add(currentlyUsedMemorySlots.get(i).getEnd());
         }
-        return addressCounter;
+        sort(slotLimits);
+        System.out.println(Arrays.toString(slotLimits.toArray()));
+        for (int i = 0 ; i < slotLimits.size()/2 - 1 ; i++) {
+            System.out.println(slotLimits.get(2 * i + 1) + " < " + address + " < " + slotLimits.get(2 * i + 2));
+            if (address > slotLimits.get(2 * i + 1) && (address < slotLimits.get(2 * i + 2))) {
+                return slotLimits.get(2 * i + 2);
+            }
+        }
+        return blockLimits.get(blockLimits.size() - 1);
     }
 
-    private int getMaxAddress(int[] availableBlockSizes) {
-        int addressCounter = 0;
-        for (int i = 0 ; i < availableBlockSizes.length ; i++) {
-            addressCounter += availableBlockSizes[i];
+    private int findNextSlotEnd(int address, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
+        ArrayList<Integer> slotLimits = new ArrayList<>();
+        for (int i = 0 ; i < currentlyUsedMemorySlots.size() ; i++) {
+            slotLimits.add(currentlyUsedMemorySlots.get(i).getStart());
+            slotLimits.add(currentlyUsedMemorySlots.get(i).getEnd());
         }
-        return addressCounter - 1;
+        sort(slotLimits);
+        for (int i = 0 ; i < currentlyUsedMemorySlots.size() ; i++) {
+            if (address == slotLimits.get(2 * i)) {
+                return slotLimits.get(2 * i + 1) + 1;
+            }
+        }
+        return address;
+    }
+
+    private void sort(ArrayList<Integer> arrayList) {
+        for (int i = 0 ; i < arrayList.size() ; i++) {
+            for (int j = i + 1 ; j < arrayList.size() ; j++) {
+                if (arrayList.get(i) > arrayList.get(j)) {
+                    int temp = arrayList.get(i);
+                    arrayList.set(i, arrayList.get(j));
+                    arrayList.set(j, temp);
+                }
+            }
+        }
     }
 
     private void cleanUp(ArrayList<MemorySlot> currentlyUsedMemorySlots) {
+        ArrayList<Integer> pidsForRemoval = new ArrayList<>();
+        ArrayList<MemorySlot> slotsForRemoval = new ArrayList<>();
         for (int i = 0 ; i < loadedProcesses.size() ; i++) {
+            if (showDebugMessages) System.out.println("Checking process " + loadedProcesses.get(i).getPCB().getPid() + " for termination (" + loadedProcesses.get(i).getPCB().getState() + ")");
             if (loadedProcesses.get(i).getPCB().getState() == ProcessState.TERMINATED) {
                 for (int j = 0 ; j < currentlyUsedMemorySlots.size() ; j++) {
-                    if (loadedProcessesAddresses.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
-                        if (showDebugMessages) System.out.println("Process " + loadedProcesses.get(i).getPCB().getPid() + " will be deleted from address " + loadedProcessesAddresses.get(i));
-                        currentlyUsedMemorySlots.remove(currentlyUsedMemorySlots.get(j));
-                        loadedProcesses.remove(i);
-                        loadedProcessesAddresses.remove(i);
+                    if (loadedAddressesStart.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
+                        if (showDebugMessages) System.out.println("Process " + loadedProcesses.get(i).getPCB().getPid() + " will be deleted from address " + loadedAddressesStart.get(i));
+                        pidsForRemoval.add(loadedProcesses.get(i).getPCB().getPid());
+                        slotsForRemoval.add(currentlyUsedMemorySlots.get(j));
                     }
                 }
             }
+        }
+        for (int i = 0 ; i < pidsForRemoval.size() ; i++) {
+            System.out.println(pidsForRemoval.get(i));
+            for (int j = 0 ; j < loadedProcesses.size() ; j++) {
+                if (pidsForRemoval.get(i) == loadedProcesses.get(j).getPCB().getPid()) {
+                    System.out.println("Removed process " + loadedProcesses.get(j).getPCB().getPid() + " in address: " + loadedAddressesStart.get(j));
+                    loadedProcesses.remove(j);
+                    loadedAddressesStart.remove(j);
+                    loadedAddressesEnd.remove(i);
+                }
+            }
+        }
+        for (int j = 0 ; j < slotsForRemoval.size() ; j++) {
+            currentlyUsedMemorySlots.remove(slotsForRemoval.get(j));
         }
     }
 }
