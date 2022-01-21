@@ -4,12 +4,13 @@ public class NextFit extends MemoryAllocationAlgorithm {
 
     private int nextUsableAddress;
     private ArrayList<Process> loadedProcesses;
-    private ArrayList<Integer> getLoadedProcessesAddresses;
+    private ArrayList<Integer> loadedProcessesAddresses;
+    private boolean showDebugMessages = true;
 
     public NextFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
         loadedProcesses = new ArrayList<>();
-        getLoadedProcessesAddresses = new ArrayList<>();;
+        loadedProcessesAddresses = new ArrayList<>();;
     }
 
     public int fitProcess(Process p, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
@@ -20,9 +21,7 @@ public class NextFit extends MemoryAllocationAlgorithm {
          * loaded into if the process fits. In case the process doesn't fit, it
          * should return -1. */
 
-
-
-        boolean showDebugMessages = false;
+        cleanUp(currentlyUsedMemorySlots);
 
         int addressesSearched = 0;
         address = nextUsableAddress;
@@ -80,7 +79,7 @@ public class NextFit extends MemoryAllocationAlgorithm {
         }
         if (fit) {
             loadedProcesses.add(p);
-            getLoadedProcessesAddresses.add(address);
+            loadedProcessesAddresses.add(address);
             return address;
         }
         else {
@@ -142,12 +141,14 @@ public class NextFit extends MemoryAllocationAlgorithm {
         for (int i = 0 ; i < loadedProcesses.size() ; i++) {
             if (loadedProcesses.get(i).getPCB().getState() == ProcessState.TERMINATED) {
                 for (int j = 0 ; j < currentlyUsedMemorySlots.size() ; j++) {
-                    if (getLoadedProcessesAddresses.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
-                        System.out.println("**Process " + loadedProcesses.get(i).getPCB().getPid() + " must be deleted ***");
+                    if (loadedProcessesAddresses.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
+                        if (showDebugMessages) System.out.println("Process " + loadedProcesses.get(i).getPCB().getPid() + " will be deleted from address " + loadedProcessesAddresses.get(i));
+                        currentlyUsedMemorySlots.remove(currentlyUsedMemorySlots.get(j));
+                        loadedProcesses.remove(i);
+                        loadedProcessesAddresses.remove(i);
                     }
                 }
             }
         }
     }
-
 }
