@@ -93,6 +93,9 @@ public class Process {
     public int getArrivalTime(){
         return arrivalTime;
     }
+    public int getMemoryRequirements() {
+        return memoryRequirements;
+    }
 
     public int getMemoryArrivalTime(){
         return memoryArrivalTime;
