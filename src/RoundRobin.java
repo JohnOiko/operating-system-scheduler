@@ -23,6 +23,10 @@ public class RoundRobin extends Scheduler {
     public void addProcess(Process p) {
         /* TODO: you need to add some code here */
 
+        /* If the process to be added has its state set to NEW, set it to READY. Only do this if the process has not run
+        yet because going from RUNNING to READY is handled by the CPU using the method waitInBackground(). */
+        if (p.getPCB().getState() == ProcessState.NEW) p.getPCB().setState(ProcessState.READY, CPU.clock);
+
         /* If the last executed process finished using its quanta last tick and did not get removed, add the process
         before the last process of the Arraylist of processes. */
         if (quantaUsed == 0 && isScheduled(lastExecutedProcess))
@@ -44,6 +48,10 @@ public class RoundRobin extends Scheduler {
             if (quantum == 1) processes.add(processes.size(), nextProcess); // If quantum = 1 add it to the end.
             else addProcess(nextProcess); // Else if quantum > 1 add it using the class' method.
         }
+
+        // Debug message that should be deleted for the final version.
+        System.out.println("--Next process accessed - Pid: " + nextProcess.getPCB().getPid() + " - " + processes.size() + " --");
+
         quantaUsed = (quantaUsed + 1) % quantum;
         lastExecutedProcess = nextProcess;
         return nextProcess;
