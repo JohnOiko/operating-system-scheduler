@@ -35,14 +35,17 @@ public class ProcessControlBlock {
          If the process is in RUNNING state, it can change to either
          * READY or TERMINATED, so in any case
           we save the stopTime. */
-        if(this.state==ProcessState.READY) {
-                startTimes.add(currentClockTime);
+        if(this.state == ProcessState.READY && state == ProcessState.RUNNING) {
+            startTimes.add(currentClockTime);
+            this.state = state;
         }
-        else if(this.state==ProcessState.RUNNING) {
-                stopTimes.add(currentClockTime);
+        else if(this.state == ProcessState.RUNNING && (state == ProcessState.READY || state == ProcessState.TERMINATED)) {
+            stopTimes.add(currentClockTime);
+            this.state = state;
         }
-
-        this.state = state;
+        else if (this.state == ProcessState.NEW && state == ProcessState.READY) {
+            this.state = state;
+        }
     }
     
     public int getPid() { 

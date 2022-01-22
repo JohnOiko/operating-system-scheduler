@@ -7,7 +7,7 @@ public class NextFit extends MemoryAllocationAlgorithm {
     private final ArrayList<Process> loadedProcesses; // An Arraylist that holds pointers to all the loaded processes.
     private final ArrayList<Integer> loadedAddressesStart; // An Arraylist containing the start addresses of the currently used memory slots.
 
-    private final boolean showDebugMessages = true;
+    private final boolean showDebugMessages = false;
 
     public NextFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
@@ -180,7 +180,6 @@ public class NextFit extends MemoryAllocationAlgorithm {
         /* For each of the process IDs of the processes that need to be removed, find the loaded process with the corresponding process ID
         and remove it from the Arraylists that hold the loaded processes' info. */
         for (int i = 0 ; i < pidsForRemoval.size() ; i++) {
-            System.out.println(pidsForRemoval.get(i));
             for (int j = 0 ; j < loadedProcesses.size() ; j++) {
                 if (pidsForRemoval.get(i) == loadedProcesses.get(j).getPCB().getPid()) {
                     if (showDebugMessages) System.out.println("Removed process " + loadedProcesses.get(j).getPCB().getPid() + " in address: " + loadedAddressesStart.get(j));

@@ -8,12 +8,13 @@ public class CPU {
     private MMU mmu;
     private Process[] processes;
     private int currentProcess;
+    private Process nextProcess;
 
     private ArrayList<Process> arrivedProcesses = new ArrayList<>(); //Save arrived processes to load
     private ArrayList<Process> loadedProcesses = new ArrayList<>(); //Save currently loaded processes
     private ArrayList<Process> terminatedProcesses = new ArrayList<>(); //Save terminated processes
 
-    private boolean showDebugMessages = true;
+    private boolean showDebugMessages = false;
 
     public CPU(Scheduler scheduler, MMU mmu, Process[] processes) {
         this.scheduler = scheduler;
@@ -27,8 +28,9 @@ public class CPU {
 
         /* Running until all available processes have terminated */
         currentProcess = 0;
+        nextProcess = null;
         while (terminatedProcesses.size() < processes.length) {
-           if (showDebugMessages) System.out.println("Entering tick: "+CPU.clock);
+           if (showDebugMessages) System.out.println("\nEntering tick(a): "+CPU.clock);
             tick();
         }
     }
@@ -62,10 +64,11 @@ public class CPU {
                 if (showDebugMessages) System.out.println("No process running");
                 if (loadArrivedProcess() == false){
                     if (showDebugMessages) System.out.println("No arrived processes");
-                    if (showDebugMessages) System.out.println("Preparing next process");
+                    if (showDebugMessages) System.out.println("Preparing next process(1)");
+                    nextProcess = scheduler.getNextProcess();
                     prepareNextProcess();
                     processes[currentProcess].run();
-                    if (showDebugMessages) System.out.println("Running process: "+currentProcess);
+                    if (showDebugMessages) System.out.println("Running process(a): "+currentProcess);
                 }
             }
             else {
@@ -75,10 +78,11 @@ public class CPU {
                     if (loadArrivedProcess() == false) {
                         if (showDebugMessages) System.out.println("No arrived processes");
                         if (processesInMemory() == true){
-                            if (showDebugMessages) System.out.println("Preparing next process");
+                            if (showDebugMessages) System.out.println("Preparing next process(2)");
+                            nextProcess = scheduler.getNextProcess();
                             prepareNextProcess();
                             processes[currentProcess].run();
-                            if (showDebugMessages) System.out.println("Running process: "+currentProcess);
+                            if (showDebugMessages) System.out.println("Running process(b): "+currentProcess);
                         }
                         else{
                             if (showDebugMessages) System.out.println("No other process in memory");
@@ -86,18 +90,21 @@ public class CPU {
                     }
                 }
                 else{
-                    if (showDebugMessages) System.out.println("Still Running process: "+currentProcess);
-                    if (processes[currentProcess].getPCB().getPid() != scheduler.getNextProcess().getPCB().getPid()) {
-                        if (showDebugMessages) System.out.println("Next process: "+scheduler.getNextProcess().getPCB().getPid());
+                    nextProcess = scheduler.getNextProcess();
+                    if (processes[currentProcess].getPCB().getPid() != nextProcess.getPCB().getPid() || processes[currentProcess].getPCB().getState() != ProcessState.RUNNING) {
+                        if (showDebugMessages) System.out.println("Next process: "+nextProcess.getPCB().getPid());
                         if (loadArrivedProcess() == false) {
                             if (showDebugMessages) System.out.println("No arrived processes");
                             if (showDebugMessages) System.out.println("Swapping processes");
                             processes[currentProcess].waitInBackground();
-                            if (showDebugMessages) System.out.println("Preparing next process");
+                            if (showDebugMessages) System.out.println("Preparing next process(3)");
                             prepareNextProcess();
                             processes[currentProcess].run();
-                            if (showDebugMessages) System.out.println("Running process: "+currentProcess);
+                            if (showDebugMessages) System.out.println("Running process(d): "+currentProcess);
                         }
+                    }
+                    else {
+                        if (showDebugMessages) System.out.println("Still Running process(c): "+currentProcess);
                     }
                 }
             }
@@ -134,8 +141,8 @@ public class CPU {
 
     private int findNextProcessPid() {
         for (int i = 0; i < loadedProcesses.size(); i++) {
-            if (loadedProcesses.get(i).getPCB().getPid() == scheduler.getNextProcess().getPCB().getPid()) {
-                return scheduler.getNextProcess().getPCB().getPid();
+            if (loadedProcesses.get(i).getPCB().getPid() == nextProcess.getPCB().getPid()) {
+                return nextProcess.getPCB().getPid();
             }
         }
         return -1;
@@ -190,7 +197,7 @@ public class CPU {
         currentProcess = findNextProcessPid();
         for (int i = 0; i < 2; i++) {
             CPU.clock++;
-            if (showDebugMessages) System.out.println("Entering tick: "+CPU.clock);
+            if (showDebugMessages) System.out.println("\nEntering tick(b): "+CPU.clock);
             checkForArrivals();
         }
     }
