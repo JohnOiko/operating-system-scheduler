@@ -16,9 +16,9 @@ public class ProcessControlBlock {
         this.startTimes = new ArrayList<Integer>();
         this.stopTimes = new ArrayList<Integer>();
         /* TODO: you need to add some code here
+
          * Hint: every process should get a unique PID */
         this.pid = pidTotal++; // increment the pidTotal
-        
     }
 
     public ProcessState getState() {
@@ -30,11 +30,11 @@ public class ProcessControlBlock {
          * Hint: update this.state, but also include currentClockTime
          * in startTimes/stopTimes */
 
-        /* If the process is in READY state, it can only change to RUNNING,
-         then save the startTime.
-         If the process is in RUNNING state, it can change to either
-         * READY or TERMINATED, so in any case
-          we save the stopTime. */
+        /* If the process is in READY state, it can only change to RUNNING, then save the startTime.
+         * If the process is in RUNNING state, it can change to either READY or TERMINATED, then save the stopTime.
+         * If the process is in NEW state, it can only change to READY.
+         * In all the above cases the state is changed to the given state, or if none of the above criteria are
+         * satisfied, nothing happens. */
         if(this.state == ProcessState.READY && state == ProcessState.RUNNING) {
             startTimes.add(currentClockTime);
             this.state = state;
