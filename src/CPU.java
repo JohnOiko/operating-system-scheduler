@@ -204,6 +204,15 @@ public class CPU {
 
     /* Calculate total time the process has ran. */
     private int getRunTime(Process p) {
-        return CPU.clock - (int)p.getWaitingTime() - p.getMemoryArrivalTime();
+        int runTime = 0;
+        for (int i = 0 ; i < p.getPCB().getStartTimes().size() ; i++) {
+            if (i >= p.getPCB().getStopTimes().size()) {
+                runTime += CPU.clock - p.getPCB().getStartTimes().get(i);
+            }
+            else {
+                runTime += p.getPCB().getStopTimes().get(i) - p.getPCB().getStartTimes().get(i);
+            }
+        }
+        return runTime;
     }
 }
