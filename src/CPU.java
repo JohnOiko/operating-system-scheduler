@@ -14,7 +14,7 @@ public class CPU {
     private ArrayList<Process> loadedProcesses = new ArrayList<>(); //Save currently loaded processes
     private ArrayList<Process> terminatedProcesses = new ArrayList<>(); //Save terminated processes
 
-    private boolean showDebugMessages = false;
+    private boolean showDebugMessages = true;
 
     public CPU(Scheduler scheduler, MMU mmu, Process[] processes) {
         this.scheduler = scheduler;
@@ -169,7 +169,6 @@ public class CPU {
             for (int i = 0; i < arrivedProcesses.size(); i++) {
                 if (showDebugMessages) System.out.println("Trying to load arrived process: "+arrivedProcesses.get(i).getPCB().getPid());
                 if (mmu.loadProcessIntoRAM(arrivedProcesses.get(i))) {
-                    arrivedProcesses.get(i).setMemoryArrivalTime(CPU.clock);
                     scheduler.addProcess(arrivedProcesses.get(i));
                     loadedProcesses.add(arrivedProcesses.get(i));
                     if (showDebugMessages) System.out.println("Successfully loaded process: "+arrivedProcesses.get(i).getPCB().getPid());
@@ -202,7 +201,7 @@ public class CPU {
         }
     }
 
-    /* Calculate total time the process has ran. */
+    /* Calculate total time the process has run. */
     private int getRunTime(Process p) {
         int runTime = 0;
         for (int i = 0 ; i < p.getPCB().getStartTimes().size() ; i++) {
