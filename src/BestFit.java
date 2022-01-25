@@ -48,7 +48,6 @@ public class BestFit extends MemoryAllocationAlgorithm {
         }
 
         boolean reachedEnd = false; // Boolean to check if the algorithm has checked the whole RAM.
-        if (showDebugMessages) System.out.println("next address at start is " + address);
 
         int blockEnd = -1;
 
@@ -57,7 +56,6 @@ public class BestFit extends MemoryAllocationAlgorithm {
             int currentBlockIndex = getBlockIndex(address, blockLimits); // Find the current block the address is we are looking at is in.
             blockEnd = blockLimits.get(2 * currentBlockIndex + 1); // Save the current block's end address.
             int nextSlotLimit = findNextSlotLimit(address, currentlyUsedMemorySlots);
-            if (showDebugMessages) System.out.println("Next start " + address + " - " + "next limit " + (Math.min(blockEnd, nextSlotLimit)));
             /* If the process fits within the space between address and the next closest block limit or start of currently used memory slot (whichever is closer),
             check if this is the best fitting address so far. */
             if (address + p.getMemoryRequirements() <= (Math.min(blockEnd, nextSlotLimit))) {
@@ -65,7 +63,6 @@ public class BestFit extends MemoryAllocationAlgorithm {
                 /* If it leaves less empty space that the previous best fitting address, update the best fitting address, the amount of space it leaves empty and
                 the index of the block it belongs to. */
                 if (Math.min(blockEnd, nextSlotLimit) - address + p.getMemoryRequirements() < bestFitSpace) {
-                    if (showDebugMessages) System.out.println(address + " better than " + bestFitAddress);
                     bestFitSpace = Math.min(blockEnd, nextSlotLimit) - address + p.getMemoryRequirements();
                     bestFitAddress = address;
                     bestFitBlockIndex = currentBlockIndex;
@@ -85,7 +82,6 @@ public class BestFit extends MemoryAllocationAlgorithm {
         }
         // If the process can be loaded to the RAM, load it and update the Arraylists that hold the info about the loaded processes and slots and return its address.
         if (fit) {
-            if (showDebugMessages) System.out.println("Process " + p.getPCB().getPid() + " placed in slot [" + bestFitAddress + ", " + (bestFitAddress + p.getMemoryRequirements() - 1) + "]");
             // Create the new memory slot and add it to the Arraylist of currently used slots.
             MemorySlot newSlot = new MemorySlot(bestFitAddress, bestFitAddress + p.getMemoryRequirements() - 1, blockLimits.get(2 * bestFitBlockIndex), blockLimits.get(2 * bestFitBlockIndex + 1));
             currentlyUsedMemorySlots.add(newSlot);
@@ -163,13 +159,11 @@ public class BestFit extends MemoryAllocationAlgorithm {
         ArrayList<MemorySlot> slotsForRemoval = new ArrayList<>(); // Holds the currently used memory slots which must be removed.
         /* Check each of the loaded processes to see if their state is set to TERMINATED. */
         for (int i = 0 ; i < loadedProcesses.size() ; i++) {
-            if (showDebugMessages) if (showDebugMessages) System.out.println("Checking process " + loadedProcesses.get(i).getPCB().getPid() + " for termination (" + loadedProcesses.get(i).getPCB().getState() + ")");
             /* If this process' state is indeed TERMINATED then find the currently used memory slot with the same start address as the process' address
             and add its process ID and the slot to the process IDs and the slots that need to be removed. */
             if (loadedProcesses.get(i).getPCB().getState() == ProcessState.TERMINATED) {
                 for (int j = 0 ; j < currentlyUsedMemorySlots.size() ; j++) {
                     if (loadedAddressesStart.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
-                        if (showDebugMessages) System.out.println("Process " + loadedProcesses.get(i).getPCB().getPid() + " will be deleted from address " + loadedAddressesStart.get(i));
                         pidsForRemoval.add(loadedProcesses.get(i).getPCB().getPid());
                         slotsForRemoval.add(currentlyUsedMemorySlots.get(j));
                     }
@@ -181,7 +175,6 @@ public class BestFit extends MemoryAllocationAlgorithm {
         for (int i = 0 ; i < pidsForRemoval.size() ; i++) {
             for (int j = 0 ; j < loadedProcesses.size() ; j++) {
                 if (pidsForRemoval.get(i) == loadedProcesses.get(j).getPCB().getPid()) {
-                    if (showDebugMessages) System.out.println("Removed process " + loadedProcesses.get(j).getPCB().getPid() + " in address: " + loadedAddressesStart.get(j));
                     loadedProcesses.remove(j);
                     loadedAddressesStart.remove(j);
                 }
