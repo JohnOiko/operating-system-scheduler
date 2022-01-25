@@ -16,6 +16,10 @@ public class SRTF extends Scheduler {
         /* TODO: you need to add some code here
          * and change the return value */
 
+        // If there are no scheduled processes return null.
+        if (processes.size() == 0) {
+            return null;
+        }
         Process nextProcess = processes.get(0);
         for (int i = 0 ; i < processes.size(); i++) {
             if (processes.get(i).getPCB().getState() == ProcessState.RUNNING) {
