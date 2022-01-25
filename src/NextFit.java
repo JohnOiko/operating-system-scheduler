@@ -7,8 +7,6 @@ public class NextFit extends MemoryAllocationAlgorithm {
     private final ArrayList<Process> loadedProcesses; // An Arraylist that holds pointers to all the loaded processes.
     private final ArrayList<Integer> loadedAddressesStart; // An Arraylist containing the start addresses of the currently used memory slots.
 
-    private final boolean showDebugMessages = false;
-
     public NextFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
         nextUsableAddress = 0;
@@ -46,7 +44,6 @@ public class NextFit extends MemoryAllocationAlgorithm {
 
         boolean reachedEnd = false; // Boolean to check if the algorithm has checked from the initial nextUsableAddress until the end of the RAM once.
         address = nextUsableAddress; // This address will be the final address if the process can be loaded and is updated while looking for available slots.
-        if (showDebugMessages) System.out.println("nextUsableAddress at start is " + nextUsableAddress);
 
         /* While loop that checks for available slots until the process is successfully loaded or the whole RAM has been checked for available
         memory slots once without finding a free slot. */
@@ -55,12 +52,10 @@ public class NextFit extends MemoryAllocationAlgorithm {
             int blockStart = blockLimits.get(2 * currentBlockIndex); // Save the current block's start address.
             int blockEnd = blockLimits.get(2 * currentBlockIndex + 1); // Save the current block's end address.
             int nextSlotLimit = findNextSlotLimit(address, currentlyUsedMemorySlots);
-            if (showDebugMessages) System.out.println("Next start " + address + " - " + "next limit " + (Math.min(blockEnd, nextSlotLimit)));
             /* If the process fits within the space between address and the next closest block limit or start of currently used memory slot (whichever is closer),
             load it into the RAM in this address. */
             if (address + p.getMemoryRequirements() <= (Math.min(blockEnd, nextSlotLimit))) {
                 fit = true;
-                if (showDebugMessages) System.out.println("Process " + p.getPCB().getPid() + " placed in slot [" + address + ", " + (address + p.getMemoryRequirements() - 1) + "]");
                 // Create the new memory slot and add it to the Arraylist of currently used slots.
                 MemorySlot newSlot = new MemorySlot(address, address + p.getMemoryRequirements() - 1, blockStart, blockEnd);
                 currentlyUsedMemorySlots.add(newSlot);
@@ -70,7 +65,6 @@ public class NextFit extends MemoryAllocationAlgorithm {
                 if (nextUsableAddress >= blockLimits.get(blockLimits.size() - 1) - 1) {
                     nextUsableAddress = 0;
                 }
-                if(showDebugMessages) System.out.println("nextUsableAddress at end of loading is " + nextUsableAddress);
             }
             // This is executed if the process does not fit within the space between address and the next closest block limit or start of currently used memory slot (whichever is closer).
             else {
@@ -164,13 +158,11 @@ public class NextFit extends MemoryAllocationAlgorithm {
         ArrayList<MemorySlot> slotsForRemoval = new ArrayList<>(); // Holds the currently used memory slots which must be removed.
         /* Check each of the loaded processes to see if their state is set to TERMINATED. */
         for (int i = 0 ; i < loadedProcesses.size() ; i++) {
-            if (showDebugMessages) if (showDebugMessages) System.out.println("Checking process " + loadedProcesses.get(i).getPCB().getPid() + " for termination (" + loadedProcesses.get(i).getPCB().getState() + ")");
             /* If this process' state is indeed TERMINATED then find the currently used memory slot with the same start address as the process' address
             and add its process ID and the slot to the process IDs and the slots that need to be removed. */
             if (loadedProcesses.get(i).getPCB().getState() == ProcessState.TERMINATED) {
                 for (int j = 0 ; j < currentlyUsedMemorySlots.size() ; j++) {
                     if (loadedAddressesStart.get(i) == currentlyUsedMemorySlots.get(j).getStart()) {
-                        if (showDebugMessages) System.out.println("Process " + loadedProcesses.get(i).getPCB().getPid() + " will be deleted from address " + loadedAddressesStart.get(i));
                         pidsForRemoval.add(loadedProcesses.get(i).getPCB().getPid());
                         slotsForRemoval.add(currentlyUsedMemorySlots.get(j));
                     }
@@ -182,7 +174,6 @@ public class NextFit extends MemoryAllocationAlgorithm {
         for (int i = 0 ; i < pidsForRemoval.size() ; i++) {
             for (int j = 0 ; j < loadedProcesses.size() ; j++) {
                 if (pidsForRemoval.get(i) == loadedProcesses.get(j).getPCB().getPid()) {
-                    if (showDebugMessages) System.out.println("Removed process " + loadedProcesses.get(j).getPCB().getPid() + " in address: " + loadedAddressesStart.get(j));
                     loadedProcesses.remove(j);
                     loadedAddressesStart.remove(j);
                 }
