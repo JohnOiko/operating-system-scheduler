@@ -5,8 +5,6 @@ public class Process {
     private int arrivalTime;
     private int burstTime;
     private int memoryRequirements;
-
-    private int memoryArrivalTime;  //the tick at which the process loaded into memory (READY)
     
     public Process(int arrivalTime, int burstTime, int memoryRequirements) {
         this.arrivalTime = arrivalTime;
@@ -35,8 +33,7 @@ public class Process {
         /* Calculate the runTime,
          * if it is equal to burstTime, TERMINATE the process
          * else, put it in the READY state. */
-        double runTime = CPU.clock - getWaitingTime() - memoryArrivalTime;
-        if(runTime==burstTime){
+        if(getRunTime()==burstTime){
             getPCB().setState(ProcessState.TERMINATED,CPU.clock);
         }
         else{
@@ -72,7 +69,7 @@ public class Process {
          * and change the return value */
 
 
-        double responseTime = getPCB().getStartTimes().get(0) - memoryArrivalTime;
+        double responseTime = getPCB().getStartTimes().get(0) - arrivalTime;
         return responseTime;
     }
 
@@ -82,8 +79,8 @@ public class Process {
         /* TODO: you need to add some code here
          * and change the return value */
 
-        /* The time between the memoryArrivalTime and the last stopTime. */
-        double turnAroundTime = getPCB().getStopTimes().get(getPCB().getStopTimes().size()-1) - memoryArrivalTime;
+        /* The time between the arrivalTime and the last stopTime. */
+        double turnAroundTime = getPCB().getStopTimes().get(getPCB().getStopTimes().size()-1) - arrivalTime;
         return turnAroundTime;
     }
 
@@ -97,12 +94,17 @@ public class Process {
         return memoryRequirements;
     }
 
-    public int getMemoryArrivalTime(){
-        return memoryArrivalTime;
+    /* Calculate total time the process has run. */
+    private int getRunTime() {
+        int runTime = 0;
+        for (int i = 0 ; i < pcb.getStartTimes().size() ; i++) {
+            if (i >= pcb.getStopTimes().size()) {
+                runTime += CPU.clock - pcb.getStartTimes().get(i);
+            }
+            else {
+                runTime += pcb.getStopTimes().get(i) - pcb.getStartTimes().get(i);
+            }
+        }
+        return runTime;
     }
-    public void setMemoryArrivalTime(int memoryArrivalTime) {
-        this.memoryArrivalTime = memoryArrivalTime;
-    }
-
-
 }
