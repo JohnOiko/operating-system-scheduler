@@ -108,7 +108,7 @@ public class NextFit extends MemoryAllocationAlgorithm {
     }
 
     /* Method that returns the start address of the currently used memory slot that is the closest to
-     the given address (only for slots that are after the given address, not before). */
+    the given address (only for slots that are after the given address, not before). */
     private int findNextSlotLimit(int address, ArrayList<MemorySlot> currentlyUsedMemorySlots) {
         /* Make an Arraylist of the currently used slots' limits, just like the blockLimits Arraylist
         and sort it to make a map of the currently used memory slots. */
@@ -118,9 +118,9 @@ public class NextFit extends MemoryAllocationAlgorithm {
             slotLimits.add(currentlyUsedMemorySlots.get(i).getEnd());
         }
         sort(slotLimits);
-        for (int i = 0 ; i < slotLimits.size()/2 - 1 ; i++) {
-            if (address > slotLimits.get(2 * i + 1) && (address < slotLimits.get(2 * i + 2))) {
-                return slotLimits.get(2 * i + 2);
+        for (int i = 0 ; i < currentlyUsedMemorySlots.size() ; i++) {
+            if (address < slotLimits.get(2 * i)) {
+                return slotLimits.get(2 * i);
             }
         }
         return blockLimits.get(blockLimits.size() - 1);

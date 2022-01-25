@@ -6,7 +6,7 @@ public class BestFit extends MemoryAllocationAlgorithm {
     private final ArrayList<Process> loadedProcesses; // An Arraylist that holds pointers to all the loaded processes.
     private final ArrayList<Integer> loadedAddressesStart; // An Arraylist containing the start addresses of the currently used memory slots.
 
-    private final boolean showDebugMessages = true;
+    private final boolean showDebugMessages = false;
 
     public BestFit(int[] availableBlockSizes) {
         super(availableBlockSizes);
@@ -117,9 +117,9 @@ public class BestFit extends MemoryAllocationAlgorithm {
             slotLimits.add(currentlyUsedMemorySlots.get(i).getEnd());
         }
         sort(slotLimits);
-        for (int i = 0 ; i < slotLimits.size()/2 - 1 ; i++) {
-            if (address > slotLimits.get(2 * i + 1) && (address < slotLimits.get(2 * i + 2))) {
-                return slotLimits.get(2 * i + 2);
+        for (int i = 0 ; i < currentlyUsedMemorySlots.size() ; i++) {
+            if (address < slotLimits.get(2 * i)) {
+                return slotLimits.get(2 * i);
             }
         }
         return blockLimits.get(blockLimits.size() - 1);
